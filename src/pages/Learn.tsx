@@ -67,6 +67,7 @@ export function Learn() {
   const [picked, setPicked] = useState<string | null>(null)
   const [resolved, setResolved] = useState<boolean | null>(null)
   const [roundCorrect, setRoundCorrect] = useState(0)
+  const [lastRound, setLastRound] = useState<{ correct: number; total: number } | null>(null)
 
   const words = useMemo(() => {
     if (id == null) return []
@@ -94,6 +95,7 @@ export function Learn() {
     setPicked(null)
     setResolved(null)
     setRoundCorrect(0)
+    setLastRound(null)
     setStarted(true)
     setAnswerWith(answerWith)
   }
@@ -112,6 +114,7 @@ export function Learn() {
 
   function next() {
     if (qIndex + 1 >= queue.length) {
+      setLastRound({ correct: roundCorrect, total: queue.length })
       setStarted(false)
       setQueue([])
       return
@@ -147,8 +150,16 @@ export function Learn() {
               Starred only
             </button>
           </div>
+          {lastRound && (
+            <div style={{ marginBottom: 16 }}>
+              <div className="meta">Last round</div>
+              <div className="stat">{lastRound.correct} / {lastRound.total}</div>
+            </div>
+          )}
           <p className="meta">Questions move from multiple choice to true/false to written as you improve.</p>
-          <button className="btn" onClick={startRound} disabled={!words.length}>Start round</button>
+          <button className="btn" onClick={startRound} disabled={!words.length}>
+            {lastRound ? 'Study again' : 'Start round'}
+          </button>
         </section>
       ) : (
         <section className="question-card">

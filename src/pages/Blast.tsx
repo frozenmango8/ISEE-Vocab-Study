@@ -31,8 +31,8 @@ function spawn(pool: Word[]): { prompt: string; rocks: Rock[] } {
     correct: text === correct,
     x: 6 + (i % 2) * 42 + Math.random() * 8,
     y: 42 + Math.floor(i / 2) * 24 + Math.random() * 6,
-    vx: (Math.random() * 2 - 1) * 0.045,
-    vy: (Math.random() * 2 - 1) * 0.035,
+    vx: (Math.random() * 2 - 1) * 0.02,
+    vy: (Math.random() * 2 - 1) * 0.016,
   }))
   return { prompt, rocks }
 }

@@ -4,10 +4,17 @@ import { BackToSet } from '../components/SetLink'
 import { useCurrentSet } from '../lib/hooks'
 import { choiceLabel, distractors, expectedLabel, isWrittenCorrect, promptFor, shuffle } from '../lib/quiz'
 import { setPath, wordsForSet } from '../lib/sets'
-import { getAnswerWith, saveTest } from '../lib/storage'
+import { getAnswerWith, saveTest, setAnswerWith } from '../lib/storage'
 import type { AnswerWith, Word } from '../types'
 
 type Kind = 'mc' | 'tf' | 'written' | 'matching'
+
+const KIND_LABEL: Record<Kind, string> = {
+  mc: 'Multiple choice',
+  tf: 'True / false',
+  written: 'Written',
+  matching: 'Matching',
+}
 type Item = {
   word: Word
   kind: Kind
@@ -87,6 +94,7 @@ export function Test() {
   }
 
   function start() {
+    setAnswerWith(answerWith)
     const built = buildItems(words, Math.min(count, words.length), kinds, answerWith)
     setItems(built)
     setIndex(0)
@@ -150,7 +158,7 @@ export function Test() {
             <div className="toolbar">
               {(['mc', 'tf', 'written', 'matching'] as Kind[]).map((kind) => (
                 <button key={kind} className={`chip${kinds.includes(kind) ? ' on' : ''}`} onClick={() => toggleKind(kind)}>
-                  {kind}
+                  {KIND_LABEL[kind]}
                 </button>
               ))}
             </div>
