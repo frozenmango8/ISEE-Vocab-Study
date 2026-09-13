@@ -158,7 +158,7 @@ export function Test() {
               <button className={`chip${answerWith === 'word' ? ' on' : ''}`} onClick={() => setAw('word')}>Answer with word</button>
               <button className={`chip${answerWith === 'synonyms' ? ' on' : ''}`} onClick={() => setAw('synonyms')}>Answer with synonyms</button>
             </div>
-            <button className="btn" onClick={start}>Start test</button>
+            <button className="btn" onClick={start}>Start {Math.min(count, words.length)}-question test</button>
           </section>
         )}
       </main>

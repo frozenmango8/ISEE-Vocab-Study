@@ -348,28 +348,38 @@ h2 { margin: 0 0 8px; font-size: 22px; }
   justify-content: space-between;
   z-index: 2;
   font-weight: 700;
+  pointer-events: none;
 }
 
 .blast-prompt {
   position: absolute;
   left: 50%;
-  top: 22%;
+  top: 12%;
   transform: translateX(-50%);
   z-index: 2;
   text-align: center;
   width: min(80%, 520px);
+  pointer-events: none;
 }
+
+.blast-prompt .meta { color: #c9ceff; }
+.blast-prompt .prompt { color: #fff; font-size: 26px; margin: 0; }
+.blast-stage.hit { outline: 4px solid #18ae68; }
+.blast-stage.miss { outline: 4px solid #ff725b; }
 
 .asteroid {
   position: absolute;
-  width: 108px;
-  height: 108px;
+  width: 120px;
+  height: 120px;
   border: 0;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #8d97ff, #4255ff 55%, #2a3388);
   color: #fff;
   font-weight: 700;
-  padding: 8px;
+  padding: 10px;
+  z-index: 3;
+  cursor: pointer;
+  touch-action: manipulation;
   box-shadow: 0 0 0 4px rgba(255,255,255,0.12);
 }
 
