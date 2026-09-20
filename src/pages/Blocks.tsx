@@ -329,8 +329,13 @@ export function Blocks() {
     if (board) {
       const cell = cellFromPoint(board, event.clientX, event.clientY)
       if (cell) {
-        const origin = originFromBoardCell(cell, drag.grab)
-        ghost = { origin, valid: canPlace(grid, piece.shape, origin.r, origin.c) }
+        const grabbed = originFromBoardCell(cell, drag.grab)
+        const origin = canPlace(grid, piece.shape, grabbed.r, grabbed.c)
+          ? grabbed
+          : tapOrigin(piece.shape, cell, grid)
+        ghost = origin
+          ? { origin, valid: true }
+          : { origin: grabbed, valid: false }
       }
     }
     setDrag({ ...drag, x: event.clientX, y: event.clientY, ghost })
@@ -341,10 +346,16 @@ export function Blocks() {
     const piece = pieces[drag.index]
     const board = boardRef.current
     const cell = board ? cellFromPoint(board, event.clientX, event.clientY) : null
-    const origin = cell && piece ? originFromBoardCell(cell, drag.grab) : null
     const moved = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY)
+    let origin: Cell | null = null
+    if (cell && piece) {
+      const grabbed = originFromBoardCell(cell, drag.grab)
+      origin = canPlace(grid, piece.shape, grabbed.r, grabbed.c)
+        ? grabbed
+        : tapOrigin(piece.shape, cell, grid)
+    }
     setDrag(null)
-    if (origin && piece && canPlace(grid, piece.shape, origin.r, origin.c)) {
+    if (origin && piece) {
       placeOrigin(origin, drag.index)
       return
     }
