@@ -1,6 +1,20 @@
 import { useMemo, useRef, useState, type PointerEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { BackToSet } from '../components/SetLink'
+import {
+  canPlace,
+  canPlaceAnywhere,
+  dropOrigin,
+  emptyGrid,
+  filledCells,
+  firstFilled,
+  shapeWidth,
+  stamp,
+  tapOrigin,
+  type Cell,
+  type Grid,
+  type Shape,
+} from '../lib/blocks'
 import { useCurrentSet } from '../lib/hooks'
 import { choiceLabel, distractors, expectedLabel, promptFor, shuffle } from '../lib/quiz'
 import { setPath, wordsForSet } from '../lib/sets'
@@ -10,10 +24,6 @@ import type { Word } from '../types'
 const SIZE = 8
 const BOARD_PAD = 6
 const BOARD_GAP = 3
-
-type Grid = number[][]
-type Shape = number[][]
-type Cell = { r: number; c: number }
 
 const SHAPES: Shape[] = [
   [[1]],
@@ -52,28 +62,6 @@ type Drag = {
 
 type Question = { word: Word; prompt: string; choices: string[]; answer: string }
 
-function emptyGrid(): Grid {
-  return Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, () => 0))
-}
-
-function filledCells(shape: Shape): Cell[] {
-  const cells: Cell[] = []
-  shape.forEach((row, r) => {
-    row.forEach((on, c) => {
-      if (on) cells.push({ r, c })
-    })
-  })
-  return cells
-}
-
-function firstFilled(shape: Shape): Cell {
-  return filledCells(shape)[0] ?? { r: 0, c: 0 }
-}
-
-function shapeWidth(shape: Shape): number {
-  return Math.max(1, ...shape.map((row) => row.length))
-}
-
 function rotateShape(shape: Shape): Shape {
   const h = shape.length
   const w = shapeWidth(shape)
@@ -97,33 +85,6 @@ function randomPieces(): Piece[] {
     shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
   }))
-}
-
-function canPlace(grid: Grid, shape: Shape, row: number, col: number): boolean {
-  for (const cell of filledCells(shape)) {
-    const rr = row + cell.r
-    const cc = col + cell.c
-    if (rr < 0 || cc < 0 || rr >= SIZE || cc >= SIZE) return false
-    if (grid[rr][cc]) return false
-  }
-  return true
-}
-
-function canPlaceAnywhere(grid: Grid, shape: Shape): boolean {
-  for (let r = 0; r < SIZE; r += 1) {
-    for (let c = 0; c < SIZE; c += 1) {
-      if (canPlace(grid, shape, r, c)) return true
-    }
-  }
-  return false
-}
-
-function stamp(grid: Grid, shape: Shape, row: number, col: number): Grid {
-  const next = grid.map((line) => [...line])
-  for (const cell of filledCells(shape)) {
-    next[row + cell.r][col + cell.c] = 1
-  }
-  return next
 }
 
 function clearLines(grid: Grid): { grid: Grid; cleared: number } {
@@ -156,18 +117,6 @@ function cellFromPoint(el: HTMLElement, clientX: number, clientY: number): Cell 
   const r = Math.floor(y / (cell + BOARD_GAP))
   if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) return null
   return { r, c }
-}
-
-function tapOrigin(shape: Shape, cell: Cell, grid: Grid): Cell | null {
-  for (const block of filledCells(shape)) {
-    const origin = { r: cell.r - block.r, c: cell.c - block.c }
-    if (canPlace(grid, shape, origin.r, origin.c)) return origin
-  }
-  const clamped = {
-    r: Math.min(SIZE - shape.length, Math.max(0, cell.r)),
-    c: Math.min(SIZE - shapeWidth(shape), Math.max(0, cell.c)),
-  }
-  return canPlace(grid, shape, clamped.r, clamped.c) ? clamped : null
 }
 
 function grabFromPoint(shape: Shape, target: HTMLElement, clientX: number, clientY: number): Cell {
@@ -277,10 +226,6 @@ export function Blocks() {
     afterPlace(cleared.grid, nextPieces, gained)
   }
 
-  function originFromBoardCell(board: Cell, grab: Cell): Cell {
-    return { r: board.r - grab.r, c: board.c - grab.c }
-  }
-
   function updateHover(clientX: number, clientY: number, index = selected) {
     const board = boardRef.current
     const piece = pieces[index]
@@ -329,10 +274,8 @@ export function Blocks() {
     if (board) {
       const cell = cellFromPoint(board, event.clientX, event.clientY)
       if (cell) {
-        const grabbed = originFromBoardCell(cell, drag.grab)
-        const origin = canPlace(grid, piece.shape, grabbed.r, grabbed.c)
-          ? grabbed
-          : tapOrigin(piece.shape, cell, grid)
+        const origin = dropOrigin(piece.shape, cell, drag.grab, grid)
+        const grabbed = { r: cell.r - drag.grab.r, c: cell.c - drag.grab.c }
         ghost = origin
           ? { origin, valid: true }
           : { origin: grabbed, valid: false }
@@ -347,13 +290,7 @@ export function Blocks() {
     const board = boardRef.current
     const cell = board ? cellFromPoint(board, event.clientX, event.clientY) : null
     const moved = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY)
-    let origin: Cell | null = null
-    if (cell && piece) {
-      const grabbed = originFromBoardCell(cell, drag.grab)
-      origin = canPlace(grid, piece.shape, grabbed.r, grabbed.c)
-        ? grabbed
-        : tapOrigin(piece.shape, cell, grid)
-    }
+    const origin = cell && piece ? dropOrigin(piece.shape, cell, drag.grab, grid) : null
     setDrag(null)
     if (origin && piece) {
       placeOrigin(origin, drag.index)
