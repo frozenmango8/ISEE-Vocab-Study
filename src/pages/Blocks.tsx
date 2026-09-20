@@ -158,6 +158,18 @@ function cellFromPoint(el: HTMLElement, clientX: number, clientY: number): Cell 
   return { r, c }
 }
 
+function tapOrigin(shape: Shape, cell: Cell, grid: Grid): Cell | null {
+  for (const block of filledCells(shape)) {
+    const origin = { r: cell.r - block.r, c: cell.c - block.c }
+    if (canPlace(grid, shape, origin.r, origin.c)) return origin
+  }
+  const clamped = {
+    r: Math.min(SIZE - shape.length, Math.max(0, cell.r)),
+    c: Math.min(SIZE - shapeWidth(shape), Math.max(0, cell.c)),
+  }
+  return canPlace(grid, shape, clamped.r, clamped.c) ? clamped : null
+}
+
 function grabFromPoint(shape: Shape, target: HTMLElement, clientX: number, clientY: number): Cell {
   const cells = filledCells(shape)
   const piece = (target.matches('.piece-preview') ? target : target.querySelector('.piece-preview')) as HTMLElement | null
@@ -269,7 +281,7 @@ export function Blocks() {
     return { r: board.r - grab.r, c: board.c - grab.c }
   }
 
-  function updateHover(clientX: number, clientY: number, index = selected, grab = firstFilled(pieces[index]?.shape ?? [[1]])) {
+  function updateHover(clientX: number, clientY: number, index = selected) {
     const board = boardRef.current
     const piece = pieces[index]
     if (!board || !piece || over || question) {
@@ -281,8 +293,13 @@ export function Blocks() {
       setHover(null)
       return
     }
-    const origin = originFromBoardCell(cell, grab)
-    setHover({ origin, valid: canPlace(grid, piece.shape, origin.r, origin.c) })
+    const origin = tapOrigin(piece.shape, cell, grid)
+    if (!origin) {
+      const fallback = { r: Math.max(0, cell.r), c: Math.max(0, cell.c) }
+      setHover({ origin: fallback, valid: false })
+      return
+    }
+    setHover({ origin, valid: true })
   }
 
   function startDrag(index: number, event: PointerEvent<HTMLButtonElement>) {
@@ -343,7 +360,11 @@ export function Blocks() {
     if (drag || over || question || !active) return
     const cell = cellFromPoint(event.currentTarget, event.clientX, event.clientY)
     if (!cell) return
-    const origin = originFromBoardCell(cell, firstFilled(active.shape))
+    const origin = tapOrigin(active.shape, cell, grid)
+    if (!origin) {
+      setHint('That spot does not fit. Rotate or try another cell.')
+      return
+    }
     placeOrigin(origin, activeIndex)
   }
 
