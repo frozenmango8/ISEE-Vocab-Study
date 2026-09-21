@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import { WORDS } from '../data/words'
+import { useProgress } from '../lib/hooks'
 import { allSetIds, setPath, setTitle, wordsForSet } from '../lib/sets'
 import { masteredCount } from '../lib/storage'
 
 export function Home() {
+  useProgress()
   const allMastered = masteredCount(WORDS.map((w) => w.id))
 
   return (

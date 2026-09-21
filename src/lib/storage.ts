@@ -33,7 +33,10 @@ function load(): Store {
 
 function save(store: Store) {
   localStorage.setItem(KEY, JSON.stringify(store))
+  window.dispatchEvent(new Event('isee-progress'))
 }
+
+export const MASTERED_LEVEL = 2
 
 export function getStore(): Store {
   return load()
@@ -64,15 +67,20 @@ export function recordLearn(id: string, correct: boolean): LearnProgress {
     const level = Math.min(4, current.level + 1) as LearnLevel
     store.learn[id] = { level, streak }
   } else {
-    store.learn[id] = { level: 0, streak: 0 }
+    const level = Math.max(0, current.level - 1) as LearnLevel
+    store.learn[id] = { level, streak: 0 }
   }
   save(store)
   return store.learn[id]
 }
 
+export function isMastered(id: string): boolean {
+  return (load().learn[id]?.level ?? 0) >= MASTERED_LEVEL
+}
+
 export function masteredCount(ids: string[]): number {
   const store = load()
-  return ids.filter((id) => (store.learn[id]?.level ?? 0) >= 4).length
+  return ids.filter((id) => (store.learn[id]?.level ?? 0) >= MASTERED_LEVEL).length
 }
 
 export function bestMatch(setKey: string): number | null {

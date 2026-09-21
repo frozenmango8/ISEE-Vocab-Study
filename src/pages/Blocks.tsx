@@ -18,7 +18,7 @@ import {
 import { useCurrentSet } from '../lib/hooks'
 import { choiceLabel, distractors, expectedLabel, promptFor, shuffle } from '../lib/quiz'
 import { setPath, wordsForSet } from '../lib/sets'
-import { bestScore, saveScore } from '../lib/storage'
+import { bestScore, recordLearn, saveScore } from '../lib/storage'
 import type { Word } from '../types'
 
 const SIZE = 8
@@ -326,6 +326,7 @@ export function Blocks() {
 
   function answer(choice: string) {
     if (!question) return
+    recordLearn(question.word.id, choice === question.answer)
     if (choice === question.answer) {
       const next = randomPieces()
       setPieces(next)

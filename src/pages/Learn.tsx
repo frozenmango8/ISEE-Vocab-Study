@@ -4,7 +4,7 @@ import { BackToSet } from '../components/SetLink'
 import { useCurrentSet } from '../lib/hooks'
 import { choiceLabel, distractors, expectedLabel, isWrittenCorrect, promptFor, shuffle } from '../lib/quiz'
 import { wordsForSet } from '../lib/sets'
-import { getAnswerWith, getLearn, isStarred, masteredCount, recordLearn, setAnswerWith } from '../lib/storage'
+import { getAnswerWith, getLearn, isStarred, masteredCount, MASTERED_LEVEL, recordLearn, setAnswerWith } from '../lib/storage'
 import type { AnswerWith, Word } from '../types'
 
 type Kind = 'mc' | 'tf' | 'written' | 'spell'
@@ -82,7 +82,7 @@ export function Learn() {
   function startRound() {
     const pool = words.length ? words : wordsForSet(id!)
     const ranked = [...pool].sort((a, b) => getLearn(a.id).level - getLearn(b.id).level)
-    const unmastered = ranked.filter((w) => getLearn(w.id).level < 4)
+    const unmastered = ranked.filter((w) => getLearn(w.id).level < MASTERED_LEVEL)
     const source = (unmastered.length ? unmastered : ranked).slice(0, Math.max(ROUND, 1))
     const selected = shuffle(source).slice(0, Math.min(ROUND, source.length))
     const questions = selected.map((word) => {

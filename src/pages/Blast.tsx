@@ -4,13 +4,14 @@ import { BackToSet } from '../components/SetLink'
 import { useCurrentSet } from '../lib/hooks'
 import { distractors, expectedLabel, promptFor, shuffle } from '../lib/quiz'
 import { setPath, wordsForSet } from '../lib/sets'
-import { bestScore, saveScore } from '../lib/storage'
+import { bestScore, recordLearn, saveScore } from '../lib/storage'
 import type { Word } from '../types'
 
 const DURATION = 60
 
 type Rock = {
   id: string
+  wordId: string
   text: string
   correct: boolean
 }
@@ -23,6 +24,7 @@ function spawn(pool: Word[]): { prompt: string; rocks: Rock[] } {
   const wrong = distractors(word, pool, 3).map((w) => expectedLabel(w, answerWithWord ? 'word' : 'synonyms'))
   const rocks = shuffle([correct, ...wrong]).map((text, i) => ({
     id: `${word.id}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+    wordId: word.id,
     text,
     correct: text === correct,
   }))
@@ -86,6 +88,7 @@ export function Blast() {
   function hit(rock: Rock) {
     if (!playingRef.current || locked) return
     setLocked(true)
+    recordLearn(rock.wordId, rock.correct)
     if (rock.correct) {
       const nextCombo = comboRef.current + 1
       comboRef.current = nextCombo

@@ -4,7 +4,7 @@ import { BackToSet } from '../components/SetLink'
 import { useCurrentSet } from '../lib/hooks'
 import { pickN, shuffle } from '../lib/quiz'
 import { definitionText, setPath, wordsForSet } from '../lib/sets'
-import { bestMatch, saveMatch } from '../lib/storage'
+import { bestMatch, recordLearn, saveMatch } from '../lib/storage'
 import type { Word } from '../types'
 
 type Tile = { key: string; wordId: string; text: string }
@@ -72,6 +72,7 @@ export function Match() {
     const first = tiles.find((t) => t.key === selected)
     if (!first) return
     if (first.wordId === tile.wordId) {
+      recordLearn(tile.wordId, true)
       const next = [...matched, first.key, tile.key]
       setMatched(next)
       setSelected(null)

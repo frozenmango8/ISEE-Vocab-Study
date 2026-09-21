@@ -217,7 +217,17 @@ h2 { margin: 0 0 8px; font-size: 22px; }
   align-items: center;
 }
 
-.term-row strong { color: var(--ink); }
+.term-row strong { color: var(--ink); display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mastered-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+}
 
 .question-card {
   background: #fff;

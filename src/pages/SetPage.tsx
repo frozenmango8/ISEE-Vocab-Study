@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { useCurrentSet } from '../lib/hooks'
+import { useCurrentSet, useProgress } from '../lib/hooks'
 import { definitionText, setPath, setTitle, wordsForSet } from '../lib/sets'
-import { isStarred, masteredCount, toggleStar } from '../lib/storage'
+import { isMastered, isStarred, masteredCount, toggleStar } from '../lib/storage'
 
 const MODES = [
   { to: 'flashcards', title: 'Flashcards', icon: '🃏', tint: '#eef0ff', blurb: 'Flip through words and synonyms' },
@@ -15,6 +15,7 @@ const MODES = [
 
 export function SetPage() {
   const id = useCurrentSet()
+  useProgress()
   const [, setTick] = useState(0)
   const words = useMemo(() => (id == null ? [] : wordsForSet(id)), [id])
 
@@ -27,7 +28,7 @@ export function SetPage() {
     <main className="page">
       <Link to="/" className="back">← All sets</Link>
       <h1>{setTitle(id)}</h1>
-      <p className="lede">{words.length} words · {done} mastered in Learn</p>
+      <p className="lede">{words.length} words · {done} mastered</p>
       <div className="grid mode-grid">
         {MODES.map((mode) => (
           <Link key={mode.to} to={`${base}/${mode.to}`} className="mode-card">
@@ -40,9 +41,13 @@ export function SetPage() {
       <section className="term-list">
         {words.map((word) => {
           const starred = isStarred(word.id)
+          const mastered = isMastered(word.id)
           return (
             <div key={word.id} className="term-row">
-              <strong>{word.word}</strong>
+              <strong>
+                {word.word}
+                {mastered && <span className="mastered-pill">Mastered</span>}
+              </strong>
               <span>{definitionText(word)}</span>
               <button
                 className={`star${starred ? ' on' : ''}`}

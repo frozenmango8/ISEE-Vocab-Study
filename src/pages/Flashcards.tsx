@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { BackToSet } from '../components/SetLink'
 import { useCurrentSet } from '../lib/hooks'
 import { shuffle } from '../lib/quiz'
 import { definitionText, wordsForSet } from '../lib/sets'
-import { isStarred, toggleStar } from '../lib/storage'
+import { isStarred, recordLearn, toggleStar } from '../lib/storage'
 import type { Word } from '../types'
 
 export function Flashcards() {
@@ -15,6 +15,13 @@ export function Flashcards() {
   const [termFirst, setTermFirst] = useState(true)
   const [starredOnly, setStarredOnly] = useState(false)
   const [starVersion, setStarVersion] = useState(0)
+  const flippedRef = useRef(false)
+  const cardRef = useRef<Word | undefined>(undefined)
+
+  useEffect(() => {
+    flippedRef.current = flipped
+    cardRef.current = deck[index]
+  }, [flipped, deck, index])
 
   function rebuild(onlyStarred = starredOnly) {
     if (id == null) {
@@ -27,6 +34,11 @@ export function Flashcards() {
     setFlipped(false)
   }
 
+  function flipCard() {
+    if (!flippedRef.current && cardRef.current) recordLearn(cardRef.current.id, true)
+    setFlipped((v) => !v)
+  }
+
   useEffect(() => {
     rebuild()
   }, [id, starredOnly])
@@ -35,7 +47,7 @@ export function Flashcards() {
     function onKey(e: KeyboardEvent) {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
-        setFlipped((v) => !v)
+        flipCard()
       }
       if (e.key === 'ArrowRight') {
         setIndex((i) => (deck.length ? (i + 1) % deck.length : 0))
@@ -88,7 +100,7 @@ export function Flashcards() {
           <div className="flash-wrap">
             <div
               className={`flash-card${flipped ? ' flipped' : ''}`}
-              onClick={() => setFlipped((v) => !v)}
+              onClick={flipCard}
               role="button"
               tabIndex={0}
             >

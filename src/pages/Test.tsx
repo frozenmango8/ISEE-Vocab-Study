@@ -4,7 +4,7 @@ import { BackToSet } from '../components/SetLink'
 import { useCurrentSet } from '../lib/hooks'
 import { choiceLabel, distractors, expectedLabel, isWrittenCorrect, promptFor, shuffle } from '../lib/quiz'
 import { setPath, wordsForSet } from '../lib/sets'
-import { getAnswerWith, saveTest, setAnswerWith } from '../lib/storage'
+import { getAnswerWith, recordLearn, saveTest, setAnswerWith } from '../lib/storage'
 import type { AnswerWith, Word } from '../types'
 
 type Kind = 'mc' | 'tf' | 'written' | 'matching'
@@ -110,10 +110,14 @@ export function Test() {
     let ok = false
     if (current.kind === 'written') ok = isWrittenCorrect(typed, current.word, answerWith)
     else if (current.kind === 'matching') {
+      for (const pair of current.pairs ?? []) {
+        recordLearn(pair.key, matches[pair.key] === pair.right)
+      }
       ok = (current.pairs ?? []).every((p) => matches[p.key] === p.right)
     } else {
       ok = typed === current.answer
     }
+    if (current.kind !== 'matching') recordLearn(current.word.id, ok)
     const nextScore = score + (ok ? 1 : 0)
     const nextMissed = ok ? missed : [...missed, `${current.word.word} — ${current.answer}`]
     if (index + 1 >= items.length) {
